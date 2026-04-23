@@ -46,7 +46,7 @@ def main(args):
     data = build_sequences_with_future_exog(df, cfg)
 
     os.makedirs("artifacts", exist_ok=True)
-
+    all_metrics = []  # сюда будем складывать метрики по всем SKU
     # обучаем модель отдельно для каждого SKU
     for sku, (X, y, dates) in data.items():
         print(f"\nTraining SKU: {sku}")
@@ -271,6 +271,13 @@ def main(args):
 
         print(f"{sku} → MAE={mae:.2f} RMSE={rmse:.2f} WAPE={w:.2f}%")
 
+        # собираем метрики по SKU в общий список
+        all_metrics.append({
+            "sku": sku,
+            "mae": float(mae),
+            "rmse": float(rmse),
+            "wape": float(w),
+        })
         # сохранение
         sku_dir = os.path.join("artifacts", sku)
         os.makedirs(sku_dir, exist_ok=True)
@@ -298,6 +305,10 @@ def main(args):
                 f,
                 indent=2,
             )
+    with open("artifacts/metrics_nn_all.json", "w", encoding="utf-8") as f:
+        json.dump(all_metrics, f, indent=2)
+
+    print("Saved artifacts/metrics_nn_all.json")
 
 
 if __name__ == "__main__":
